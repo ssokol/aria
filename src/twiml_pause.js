@@ -15,7 +15,7 @@ twimlActions.Pause = function(command, callback) {
   console.log("Channel " + channel.id + " - Pausing: " + command.parameters.length);
   
   var timer = null;
-  var value = parseInt(command.parameters.length);
+  var value = parseInt(command.parameters.length, 10);
   
   call.hangupCallback = function() {
     if (timer) {

@@ -6,6 +6,12 @@
     convenience functions for fetching Twiml and generating a linked list of
     actions to process. 
 
+    TODO: In reality Aria could handle any number of other script formats. Twiml is
+    convenient because there are already libraries out there that generate it. At
+    some point in the future it would be fun to wrap up the twiml-specific bits in
+    a node module and make the interpreter generic, such that you could use other
+    inputs - perhaps a JSON-based script - to drive the Aria engine.
+    
 **************************************************************************************/
 
 var makeAction = function(xml, parent) {
@@ -79,8 +85,6 @@ var fetchTwiml = function(method, url, call, data) {
 function AriaCall(client, channel, url, twiml, done) {
 
   var that = this;
-  var first = null;
-  var last = null;
 
   this.client = client; // a reference to the ARI client
   this.channel = channel; // the ARI channel object for the call
@@ -99,7 +103,7 @@ function AriaCall(client, channel, url, twiml, done) {
   this.hungup = false; // hangup flag
   this.hangupCallback = null; // callback on hangup
 
-  this.createTime = (new Date).getTime();
+  this.createTime = new Date().getTime();
 
   // advance to the next action in the list
   this.advancePointer = function() {
@@ -111,7 +115,7 @@ function AriaCall(client, channel, url, twiml, done) {
     }
   };
 
-  channel.on('ChannelDtmfReceived', function(evt, channel) {
+  channel.on("ChannelDtmfReceived", function(evt, channel) {
     console.log("Channel " + channel.id + " - Digit: " + evt.digit);
     that.digits += evt.digit;
     if (that.digitCallback) {
@@ -119,7 +123,7 @@ function AriaCall(client, channel, url, twiml, done) {
     }
   });
 
-  channel.on('ChannelHangupRequest', function(evt, channel) {
+  channel.on("ChannelHangupRequest", function(evt, channel) {
     console.log("Channel " + channel.id + " - Hangup Request");
     that.hungup = true;
     if (that.hangupCallback) {
@@ -143,7 +147,7 @@ AriaCall.prototype.processCall = function() {
 AriaCall.prototype.terminateCall = function() {
   // post the call record to the account's call history URI if set;
   // do other post-call stuff here
-  var milliseconds = (new Date).getTime();
+  var milliseconds = new Date().getTime();
   console.log("Channel " + this.channel.id + " - Call duration: " + (milliseconds - this.createTime) + "ms");
   if (!this.hungup) {
     try {

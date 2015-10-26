@@ -1,12 +1,24 @@
-/****************************************************************************************
+/**************************************************************************************
 
-  Twiml "Play" verb - fetch audio (if not already cached) from a URL and play it
-  back to the caller. Play includes a value (the URL) and optionally two parameters:
+    Aria Message action
+    
+    Send a message to a Respoke endpoint.
 
-****************************************************************************************/
+**************************************************************************************/
+twimlActions.Message = function(command, callback) {
 
-var twimlMessage = function(client, channel, command) {
-    console.log(command.name);
-}
+  var call = command.call;
+  var channel = call.channel;
+  var client = call.client;
+  var playback = null;
 
-exports.Message = twimlMessage
+  console.log("Channel " + channel.id + " - Message: " + command.value);
+  
+  // TODO: implement Respoke message send
+  
+  // go on to the next action
+  setTimeout(function() {
+    return callback();
+  }, 0);
+
+};

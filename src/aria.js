@@ -36,13 +36,15 @@
 	"url" key should include a fully qualified URL pointing to the application or raw
 	Twiml script to execute.
 	
+	See the README.md file or the wiki for more information on configuring Aria.
+	
 **************************************************************************************/
 (function() {
 
-  var rc = null;
+  var rc = null;   
 
   // source the configuration
-  var config = require('/etc/asterisk/aria.conf.js');
+  var config = require("/etc/asterisk/aria.conf.js");
 
   function clientLoaded(err, client) {
     if (err) {
@@ -52,12 +54,12 @@
     // handler for StasisStart event
     function stasisStart(event, channel) {
 
-			if (event.args[0] === 'dialed') {
+			if (event.args[0] === "dialed") {
 				console.log("Ignoring dialed call leg.");
 				return;
 			}
 			
-      console.log(util.format('Channel %s - Entered the application', channel.id));
+      console.log(util.format("Channel %s - Entered the application", channel.id));
 
       // figure out what technology is in use so we know what to use for routing
       var ctype = event.channel.name.split("/")[0];
@@ -97,15 +99,15 @@
 
     // handler for StasisEnd event
     function stasisEnd(event, channel) {
-      console.log(util.format('Channel %s - Left the application', channel.id));
+      console.log(util.format("Channel %s - Left the application", channel.id));
     }
 
     // create a redis client
     rc = redis.createClient();
 
-    client.on('StasisStart', stasisStart);
-    client.on('StasisEnd', stasisEnd);
-    client.start('aria');
+    client.on("StasisStart", stasisStart);
+    client.on("StasisEnd", stasisEnd);
+    client.start("aria");
   }
 
   console.log("Initializing Aria Twiml actions.");

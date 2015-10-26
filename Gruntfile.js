@@ -12,21 +12,21 @@ module.exports = function(grunt) {
 
   // Project configuration.
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: grunt.file.readJSON('package.json'), 
     watch: {
       js: {
         files: [
           'src/*.js',
           'Gruntfile.js'
         ],
-        tasks: ['jshint']
+        tasks: ['jshint', 'concat']
       }
     },
     jshint: {
       options: {
         jshintrc: '.jshintrc'
       },
-      all: ['Gruntfile.js', 'assets/js/*.js']
+      all: ['src/*.js']
     },
     concat: {
       options: {
@@ -46,5 +46,5 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   
   // Register the default tasks.
-  grunt.registerTask('default', ['concat']);
+  grunt.registerTask('default', ['watch']);
 };

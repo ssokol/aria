@@ -1,7 +1,8 @@
 /****************************************************************************************
 
-  Twiml "Play" verb - fetch audio (if not already cached) from a URL and play it
-  back to the caller. Play includes a value (the URL) and optionally two parameters:
+    Aria Enqueue action
+    
+    Call a phone number, WebRTC client, SIP destination, conference or queue.
 
 ****************************************************************************************/
 

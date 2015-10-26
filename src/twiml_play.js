@@ -54,14 +54,14 @@ twimlActions.Play = function(command, callback) {
   // play back the sound file
   var play = function(sound, done) {
     playback = client.Playback();
-    playback.on('PlaybackFinished', function(event, cp) {
+    playback.on("PlaybackFinished", function(event, cp) {
       playback = null;
       if (done) {
         done();
       }
     });
     channel.play({
-      media: 'sound:' + sound
+      media: "sound:" + sound
     }, playback);
   };
 
@@ -90,7 +90,7 @@ twimlActions.Play = function(command, callback) {
 
   // create a downloader object and fetch the file
   var dl = new download({
-    mode: '755'
+    mode: "755"
   });
   dl.get(fileURL.href)
     .dest(audioPath)

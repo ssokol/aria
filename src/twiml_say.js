@@ -49,14 +49,14 @@ twimlActions.Say = function(command, callback) {
 
   var play = function(sound, done) {
     playback = client.Playback();
-    playback.on('PlaybackFinished', function(event, cp) {
+    playback.on("PlaybackFinished", function(event, cp) {
       playback = null;
       if (done) {
         done();
       }
     });
     channel.play({
-      media: 'sound:' + sound
+      media: "sound:" + sound
     }, playback);
   };
 

@@ -28,7 +28,7 @@ twimlActions.Gather = function(command, callback) {
   }
 
   // set the max digits and terminator values
-  call.maxDigits = parseInt(command.parameters.numDigits) || 0;
+  call.maxDigits = parseInt(command.parameters.numDigits, 10) || 0;
   call.termDigit = command.parameters.finishOnKey || "#";
 
   var collectDigits = function() {
