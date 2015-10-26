@@ -4,6 +4,8 @@
     
     Send a message to a Respoke endpoint.
 
+    NOT YET IMPLEMENTED
+    
 **************************************************************************************/
 twimlActions.Message = function(command, callback) {
 
@@ -12,7 +14,7 @@ twimlActions.Message = function(command, callback) {
   var client = call.client;
   var playback = null;
 
-  console.log("Channel " + channel.id + " - Message: " + command.value);
+  console.log("Channel " + channel.id + " - Message: " + command.value + " NOT YET IMPLEMENTED");
   
   // TODO: implement Respoke message send
   

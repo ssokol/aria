@@ -10,19 +10,19 @@
 	
 ****************************************************************************************/
 "use strict";
-var fs = require('fs');
-var url = require('url');
-var md5 = require('md5');
-var path = require('path');
-var util = require('util');
-var redis = require('redis');
-var flite = require('flite');
-var parser = require('xmldoc');
-var ari = require('ari-client');
-var fetch = require('node-fetch');
-fetch.Promise = require('bluebird');
-var download = require('download');
-var formdata = require('form-data');
+var fs = require("fs");
+var url = require("url");
+var md5 = require("md5");
+var path = require("path");
+var util = require("util");
+var redis = require("redis");
+var flite = require("flite");
+var parser = require("xmldoc");
+var ari = require("ari-client");
+var fetch = require("node-fetch");
+fetch.Promise = require("bluebird");
+var download = require("download");
+var formdata = require("form-data");
 
 var twimlActions = {};
 var audioPath = "/var/lib/asterisk/sounds/";
@@ -35,6 +35,12 @@ var rc = redis.createClient();
     convenience functions for fetching Twiml and generating a linked list of
     actions to process. 
 
+    TODO: In reality Aria could handle any number of other script formats. Twiml is
+    convenient because there are already libraries out there that generate it. At
+    some point in the future it would be fun to wrap up the twiml-specific bits in
+    a node module and make the interpreter generic, such that you could use other
+    inputs - perhaps a JSON-based script - to drive the Aria engine.
+    
 **************************************************************************************/
 
 var makeAction = function(xml, parent) {
@@ -108,8 +114,6 @@ var fetchTwiml = function(method, url, call, data) {
 function AriaCall(client, channel, url, twiml, done) {
 
   var that = this;
-  var first = null;
-  var last = null;
 
   this.client = client; // a reference to the ARI client
   this.channel = channel; // the ARI channel object for the call
@@ -128,7 +132,7 @@ function AriaCall(client, channel, url, twiml, done) {
   this.hungup = false; // hangup flag
   this.hangupCallback = null; // callback on hangup
 
-  this.createTime = (new Date).getTime();
+  this.createTime = new Date().getTime();
 
   // advance to the next action in the list
   this.advancePointer = function() {
@@ -140,7 +144,7 @@ function AriaCall(client, channel, url, twiml, done) {
     }
   };
 
-  channel.on('ChannelDtmfReceived', function(evt, channel) {
+  channel.on("ChannelDtmfReceived", function(evt, channel) {
     console.log("Channel " + channel.id + " - Digit: " + evt.digit);
     that.digits += evt.digit;
     if (that.digitCallback) {
@@ -148,7 +152,7 @@ function AriaCall(client, channel, url, twiml, done) {
     }
   });
 
-  channel.on('ChannelHangupRequest', function(evt, channel) {
+  channel.on("ChannelHangupRequest", function(evt, channel) {
     console.log("Channel " + channel.id + " - Hangup Request");
     that.hungup = true;
     if (that.hangupCallback) {
@@ -172,7 +176,7 @@ AriaCall.prototype.processCall = function() {
 AriaCall.prototype.terminateCall = function() {
   // post the call record to the account's call history URI if set;
   // do other post-call stuff here
-  var milliseconds = (new Date).getTime();
+  var milliseconds = new Date().getTime();
   console.log("Channel " + this.channel.id + " - Call duration: " + (milliseconds - this.createTime) + "ms");
   if (!this.hungup) {
     try {
@@ -194,30 +198,52 @@ AriaCall.prototype.terminateCall = function() {
     for somewhat finer-grained control over the call.
 
 **************************************************************************************/
-
 twimlActions.Answer = function(command, callback) {
 
   var call = command.call;
   var channel = call.channel;
   var client = call.client;
   var playback = null;
-  
+
   console.log("Channel " + channel.id + " - Dialing: " + command.value);
 
-	setTimeout(function() {
+  setTimeout(function() {
     if (call.hungup) {
       return call.terminateCall();
     } else {
-    	channel.answer();
+      channel.answer();
       return callback();
     }
-	}, 0);    
+  }, 0);
 
 };;/**************************************************************************************
 
     Aria Say action
     
-    Play back synthesized speech using the default TTS voice
+    Play back synthesized speech using the Flite TTS engine.
+    
+    This is a bit of a hack in that ARI currently has no support for TTS. It works
+    by using the free Flite TTS engine to render audio files which are then cached
+    and re-used. This leads to a slight but noticeable delay when using "Say" for 
+    the first time for a given word or phrase.
+    
+    Parameters
+    
+    voice: The actual Twilio engine allows you to set "man", "woman" or "alice" which
+    seems to invoke a more capable TTS engine with support for multiple languages.
+    
+    loop: the number of times to play the audio file. Default is 1. If the value is
+    set to 0, the file will be played indefinitely until the call is hung up.
+    
+    language: 
+    
+    termDigits: a string containing a list of DTMF digits that will result in the
+    playback being cancelled. NOTE: not a part of the Twilio Twiml spec.
+    
+    Nested Verbs
+    
+    Verbs may not be nested within the Say command. The Say command, however, may be
+    nested in the Gather verb.
 
 **************************************************************************************/
 twimlActions.Say = function(command, callback) {
@@ -241,14 +267,14 @@ twimlActions.Say = function(command, callback) {
 
   var play = function(sound, done) {
     playback = client.Playback();
-    playback.on('PlaybackFinished', function(event, cp) {
+    playback.on("PlaybackFinished", function(event, cp) {
       playback = null;
       if (done) {
         done();
       }
     });
     channel.play({
-      media: 'sound:' + sound
+      media: "sound:" + sound
     }, playback);
   };
 
@@ -354,14 +380,14 @@ twimlActions.Play = function(command, callback) {
   // play back the sound file
   var play = function(sound, done) {
     playback = client.Playback();
-    playback.on('PlaybackFinished', function(event, cp) {
+    playback.on("PlaybackFinished", function(event, cp) {
       playback = null;
       if (done) {
         done();
       }
     });
     channel.play({
-      media: 'sound:' + sound
+      media: "sound:" + sound
     }, playback);
   };
 
@@ -390,7 +416,7 @@ twimlActions.Play = function(command, callback) {
 
   // create a downloader object and fetch the file
   var dl = new download({
-    mode: '755'
+    mode: "755"
   });
   dl.get(fileURL.href)
     .dest(audioPath)
@@ -436,7 +462,7 @@ twimlActions.Gather = function(command, callback) {
   }
 
   // set the max digits and terminator values
-  call.maxDigits = parseInt(command.parameters.numDigits) || 0;
+  call.maxDigits = parseInt(command.parameters.numDigits, 10) || 0;
   call.termDigit = command.parameters.finishOnKey || "#";
 
   var collectDigits = function() {
@@ -571,7 +597,7 @@ twimlActions.Pause = function(command, callback) {
   console.log("Channel " + channel.id + " - Pausing: " + command.parameters.length);
   
   var timer = null;
-  var value = parseInt(command.parameters.length);
+  var value = parseInt(command.parameters.length, 10);
   
   call.hangupCallback = function() {
     if (timer) {
@@ -636,25 +662,25 @@ twimlActions.Dial = function(command, callback) {
   var originate = function(channel, destination, callerId) {
     var dialed = client.Channel();
 
-		// rather than registering another handler, perhaps this should hook the active
-		// handler provided by the call object?
-    channel.on('StasisEnd', function(event, channel) {
+    // rather than registering another handler, perhaps this should hook the active
+    // handler provided by the call object?
+    channel.on("StasisEnd", function(event, channel) {
       hangupDialed(channel, dialed);
     });
 
-    dialed.on('ChannelDestroyed', function(event, dialed) {
+    dialed.on("ChannelDestroyed", function(event, dialed) {
       hangupOriginal(channel, dialed);
     });
 
-    dialed.on('StasisStart', function(event, dialed) {
+    dialed.on("StasisStart", function(event, dialed) {
       joinMixingBridge(channel, dialed);
     });
 
     dialed.originate({
         endpoint: destination,
-        app: 'aria',
+        app: "aria",
         callerId: callerId,
-        appArgs: 'dialed'
+        appArgs: "dialed"
       },
       function(err, dialed) {
         if (err) {
@@ -662,21 +688,21 @@ twimlActions.Dial = function(command, callback) {
           exit();
         }
       });
-  }
+  };
 
-	var exit = function() {
+  var exit = function() {
     if (call.hungup) {
       return call.terminateCall();
     } else {
       return callback();
     }
-	}
-	
+  };
+
   // handler for original channel hanging up so we can gracefully hangup the
   // other end
   var hangupDialed = function(channel, dialed) {
     console.log(
-      'Channel %s - Channel has left the application. Hanging up dialed channel %s',
+      "Channel %s - Channel has left the application. Hanging up dialed channel %s",
       channel.id, dialed.id);
 
     // hangup the other end
@@ -684,10 +710,10 @@ twimlActions.Dial = function(command, callback) {
       // ignore error since dialed channel could have hung up, causing the
       // original channel to exit Stasis
     });
-  }
+  };
 
   var hangupOriginal = function(channel, dialed) {
-    console.log('Channel %s - Dialed channel %s has been hung up. Terminating call.',
+    console.log("Channel %s - Dialed channel %s has been hung up. Terminating call.",
       channel.id, dialed.id);
 
     // hangup the other end
@@ -695,13 +721,13 @@ twimlActions.Dial = function(command, callback) {
       // ignore error since original channel could have hung up, causing the
       // dialed channel to exit Stasis
     });
-  }
+  };
 
   // handler for dialed channel entering Stasis
   var joinMixingBridge = function(channel, dialed) {
     var bridge = client.Bridge();
 
-    dialed.on('StasisEnd', function(event, dialed) {
+    dialed.on("StasisEnd", function(event, dialed) {
       dialedExit(dialed, bridge);
     });
 
@@ -712,22 +738,22 @@ twimlActions.Dial = function(command, callback) {
     });
 
     bridge.create({
-      type: 'mixing'
+      type: "mixing"
     }, function(err, bridge) {
       if (err) {
         throw err;
       }
 
-      console.log('Channel %s - Created bridge %s', channel.id, bridge.id);
+      console.log("Channel %s - Created bridge %s", channel.id, bridge.id);
 
       addChannelsToBridge(channel, dialed, bridge);
     });
-  }
+  };
 
   // handler for the dialed channel leaving Stasis
   var dialedExit = function(dialed, bridge) {
     console.log(
-      'Channel %s - Dialed channel %s has left our application, destroying bridge %s',
+      "Channel %s - Dialed channel %s has left our application, destroying bridge %s",
       call.channel.id, dialed.name, bridge.id);
 
     bridge.destroy(function(err) {
@@ -735,11 +761,11 @@ twimlActions.Dial = function(command, callback) {
         throw err;
       }
     });
-  }
+  };
 
   // handler for new mixing bridge ready for channels to be added to it
   var addChannelsToBridge = function(channel, dialed, bridge) {
-    console.log('Channel %s - Adding channel %s and dialed channel %s to bridge %s',
+    console.log("Channel %s - Adding channel %s and dialed channel %s to bridge %s",
       channel.id, channel.id, dialed.id, bridge.id);
 
     bridge.addChannel({
@@ -749,21 +775,12 @@ twimlActions.Dial = function(command, callback) {
         throw err;
       }
     });
-  }
+  };
 
   var dest = "PJSIP/" + command.value + "@twilio1";
   var cid = command.parameters.callerId || "";
   originate(call.channel, dest, cid);
 
-  /*	
-  	setTimeout(function() {
-      if (call.hungup) {
-        return call.terminateCall();
-      } else {
-        return callback();
-      }
-  	}, 100);    
-  */
 };;/**************************************************************************************
 
     Aria Reject action
@@ -798,16 +815,16 @@ twimlActions.Hangup = function(command, callback) {
   var channel = call.channel;
   var client = call.client;
   var playback = null;
-  
+
   console.log("Channel " + channel.id + " - Hangup");
-  
+
   // terminate the call on the next tick
   setTimeout(function() {
-  	call.hungup = true;
-  	channel.hangup();
+    call.hungup = true;
+    channel.hangup();
     return call.terminateCall();
   }, 0);
-  
+
 };;/**************************************************************************************
 
 	Aria Call Processor - Main Module
@@ -846,13 +863,15 @@ twimlActions.Hangup = function(command, callback) {
 	"url" key should include a fully qualified URL pointing to the application or raw
 	Twiml script to execute.
 	
+	See the README.md file or the wiki for more information on configuring Aria.
+	
 **************************************************************************************/
 (function() {
 
-  var rc = null;
+  var rc = null;   
 
   // source the configuration
-  var config = require('/etc/asterisk/aria.conf.js');
+  var config = require("/etc/asterisk/aria.conf.js");
 
   function clientLoaded(err, client) {
     if (err) {
@@ -862,12 +881,12 @@ twimlActions.Hangup = function(command, callback) {
     // handler for StasisStart event
     function stasisStart(event, channel) {
 
-			if (event.args[0] === 'dialed') {
+			if (event.args[0] === "dialed") {
 				console.log("Ignoring dialed call leg.");
 				return;
 			}
 			
-      console.log(util.format('Channel %s - Entered the application', channel.id));
+      console.log(util.format("Channel %s - Entered the application", channel.id));
 
       // figure out what technology is in use so we know what to use for routing
       var ctype = event.channel.name.split("/")[0];
@@ -907,15 +926,15 @@ twimlActions.Hangup = function(command, callback) {
 
     // handler for StasisEnd event
     function stasisEnd(event, channel) {
-      console.log(util.format('Channel %s - Left the application', channel.id));
+      console.log(util.format("Channel %s - Left the application", channel.id));
     }
 
     // create a redis client
     rc = redis.createClient();
 
-    client.on('StasisStart', stasisStart);
-    client.on('StasisEnd', stasisEnd);
-    client.start('aria');
+    client.on("StasisStart", stasisStart);
+    client.on("StasisEnd", stasisEnd);
+    client.start("aria");
   }
 
   console.log("Initializing Aria Twiml actions.");

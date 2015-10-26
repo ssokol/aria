@@ -36,6 +36,11 @@ module.exports = function(grunt) {
         src: ['src/aria_intro.js', 'src/aria_call.js', 'src/twiml_answer.js', 'src/twiml_say.js', 'src/twiml_play.js', 'src/twiml_gather.js', 'src/twiml_pause.js', 'src/twiml_dial.js', 'src/twiml_reject.js', 'src/twiml_hangup.js', 'src/aria.js'],
         dest: './index.js',
       },
+    },
+    execute: {
+        target: {
+            src: ['index.js']
+        }
     }
   });
 
@@ -44,7 +49,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-execute');
   
   // Register the default tasks.
-  grunt.registerTask('default', ['watch']);
+  grunt.registerTask('default', ['concat', 'execute']);
 };
