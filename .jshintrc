@@ -1,0 +1,11 @@
+{
+  "node": true,
+  "esnext": true,
+  "curly": false,
+  "smarttabs": true,
+  "indent": 2,
+  "quotmark": "single",
+  "globals": {
+    "jQuery": true
+  }
+}
