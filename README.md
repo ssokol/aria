@@ -75,3 +75,32 @@ UI for adding numbers to Aria. For now, you can do it manually from the CLI:
 You will need to configure your SIP trunks or PSTN lines to send calls into Aria. Once
 in Aria the dialed number will be looked up and the system will fetch and execute the
 instructions in the Twiml returned.
+
+## Status
+
+At this point Aria is still very early. The following Twiml actions work (for some
+value of 'work'):
+
+* Play
+* Say
+* Gather
+* Dial
+* Hangup
+* Redirect
+* Pause
+* Answer - non-standard
+
+The following actions are not implemented (though there are placeholder files for
+all of them in the src directory):
+
+* SMS
+* Record
+* Message - non-standard
+* Leave
+* Enqueue
+
+Most of these verbs are missing some of the functionality that Twilio provides. For
+example, the terminal verbs (gather, dial) do not yet post a full call summary back
+when the call terminates. The Dial verb is currently limited to calling e.164 phone
+numbers. Support for calling conferences, clients, queues, and SIP endpoints has yet
+to be incorporated.
