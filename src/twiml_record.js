@@ -44,6 +44,8 @@ twimlActions.Record = function(command, callback) {
   };
   
   // start the recording process
+  var recordStartTime = new Date().getTime();
+  
   channel.record(params, function(err, recording) {
     if (err) {
       console.log("Error starting recording: " + err.message);
@@ -51,22 +53,37 @@ twimlActions.Record = function(command, callback) {
     }
   
     recording.on("RecordingStarted", function(event, rec) {
-      console.log("Started recording");
+      console.log("Channel " + channel.id + " - Started recording");
     });
   
     recording.on("RecordingFailed", function(event, rec) {
-      console.log("Recording Failed");
+      console.log("Channel " + channel.id + " - Recording Failed");
+      console.dir(event);
+      return callback();
     });
   
     recording.on("RecordingFinished", function(event, rec) {
-      console.log("Finished recording");
-      if (call.hungup) {
-        return call.terminateCall();
-      } else {
-        return callback();
-      }
+      var recordEndTime = new Date().getTime();
+      console.log("Channel " + channel.id + " - Finished recording");
+
+      // send digits to the server, get next XML block
+      var method = command.parameters.method || "POST";
+      var url = command.parameters.action || call.baseUrl;
+      var form = new formdata();
+      setCallData(call, form);
+      // TODO: assemble the same basic data that Twilio provides
+      
+      // Now create the URL for this file so it can be played
+      var local_uri = "recording:" + fname;
+      form.append("RecordingUri", local_uri);
+      form.append("RecordingURL", ariaConfig.serverBaseUrl + fname +".wav");
+      form.append("RecordingDuration", (recordEndTime - recordStartTime));
+      form.append("Digits", call.digits);
+      return fetchTwiml(method, url, call, form);
     });
   });
   
 };
+
+
 

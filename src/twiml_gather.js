@@ -86,7 +86,7 @@ twimlActions.Gather = function(command, callback) {
       var method = command.parameters.method || "POST";
       var url = command.parameters.action || call.baseUrl;
       var form = new formdata();
-      // TODO: assemble the same basic data that Twilio provides
+      setCallData(call, form);
       form.append("Digits", returnDigits);
       return fetchTwiml(method, url, call, form);
     } else {
@@ -145,4 +145,5 @@ twimlActions.Gather = function(command, callback) {
     collectDigits();
   }
 };
+
 

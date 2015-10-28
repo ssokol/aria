@@ -20,11 +20,25 @@ twimlActions.Redirect = function(command, callback) {
   // go on to the next action
   setTimeout(function() {
     try {
-      var method = command.parameters.method || "GET";
-      return fetchTwiml(method, command.value, call, null);
+      var method = command.parameters.method || "POST";
+      var redirectURL = null;
+      if (command.value) {
+        var parts = url.parse(command.value);
+        if (parts.protocol) {
+          redirectURL = command.value;
+        } else {
+          redirectURL = url.resolve(call.baseUrl, command.value);
+        }
+      } else {
+        redirectURL = call.baseUrl;
+      }
+      var form = new formdata();
+      setCallData(call, form);
+      return fetchTwiml(method, redirectURL, call, form);
     } catch (e) {
       return callback();
     }
   }, 0);
 
 };
+

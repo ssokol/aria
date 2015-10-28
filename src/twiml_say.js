@@ -95,7 +95,7 @@ twimlActions.Say = function(command, callback) {
   }
 
   var hashName = md5(command.value);
-  var fileName = path.join(audioPath, hashName);
+  var fileName = path.join(ariaConfig.audioPath, hashName);
 
   fs.exists(fileName, function(exists) {
     if (exists) {
@@ -105,4 +105,5 @@ twimlActions.Say = function(command, callback) {
     }
   });
 };
+
 

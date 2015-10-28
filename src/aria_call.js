@@ -45,13 +45,21 @@ var makeAction = function(xml, parent) {
 };
 
 // make subsequent requests, optionally passing back data
-var fetchTwiml = function(method, url, call, data) {
+var fetchTwiml = function(method, twimlURL, call, data) {
+
+  console.log("Fetching Twiml From: " + twimlURL);
+  
   var options = {
     method: method || "POST",
     body: data || null
   };
 
-  fetch(url, options)
+  var elements = url.parse(twimlURL);
+  if (!elements.protocol) {
+    twimlURL = url.resolve(call.baseUrl, twimlURL);
+  }
+  
+  fetch(twimlURL, options)
     .then(function(res) {
       return res.text();
     }).then(function(twiml) {
@@ -61,6 +69,9 @@ var fetchTwiml = function(method, url, call, data) {
 
       // wipe out the old stack
       call.stack = null;
+
+console.log("XML Body:");
+console.log(twiml);
 
       // parse the xml and create a new stack
       var xml = new parser.XmlDocument(twiml);
@@ -82,15 +93,32 @@ var fetchTwiml = function(method, url, call, data) {
     });
 };
 
+// load up a form data object with standard call parameters
+var setCallData = function(call, form) {
+  form.append("CallSid", call.sid);
+  form.append("AccountSid", "aria-call"); // perhaps use local IP or hostname?
+  form.append("From", call.from);
+  form.append("To", call.to);
+  form.append("CallStatus", call.status);
+  form.append("ApiVersion", "0.0.1");
+  form.append("Direction", "inbound"); // TODO: fix this to reflect actual call direction
+  form.append("ForwardedFrom", ""); // TODO: fix this too
+  form.append("CallerName", ""); // TODO: and this
+}
+
 function AriaCall(client, channel, url, twiml, done) {
 
   var that = this;
 
   this.client = client; // a reference to the ARI client
-  this.channel = channel; // the ARI channel object for the call
   this.baseUrl = url; // the base URL from whence the Twiml was fetched
   this.stack = null; // the call stack 
 
+  this.originatingChannel = channel; // the channel that originated the call (incoming)
+  this.dialedChannel = null; // the dialed channel (if any) for the call
+  
+  this.channel = this.originatingChannel; // the active channel object for the call
+  
   this.playback = null; // the placeholder for an active playback object
   this.stopOnTone = false; // should the playback be stopped when a tone is received?
 
@@ -103,8 +131,13 @@ function AriaCall(client, channel, url, twiml, done) {
   this.hungup = false; // hangup flag
   this.hangupCallback = null; // callback on hangup
 
+  this.from = channel.caller.number;
+  this.to = "";
   this.createTime = new Date().getTime();
-
+  this.status = "Awesome";
+  
+  this.sid = uuid.v4();
+  
   // advance to the next action in the list
   this.advancePointer = function() {
     if (that.stack.next) {
@@ -140,8 +173,12 @@ function AriaCall(client, channel, url, twiml, done) {
 AriaCall.prototype.processCall = function() {
   var command = this.stack;
   var action = twimlActions[command.name];
-  if (!action) console.log(command.name);
-  action(command, command.call.advancePointer);
+  if (!action) {
+    console.log("Invalid or improper command: " + command.name);
+    this.terminateCall();
+  } else {
+    action(command, command.call.advancePointer);
+  }
 };
 
 AriaCall.prototype.terminateCall = function() {
@@ -157,5 +194,6 @@ AriaCall.prototype.terminateCall = function() {
     }
   }
 };
+
 
 

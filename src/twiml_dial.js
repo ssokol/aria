@@ -34,7 +34,8 @@
 twimlActions.Dial = function(command, callback) {
 
   var call = command.call;
-  //var channel = call.channel;
+  var originalChannel = call.channel;
+  var dialedChannel = null;
   var client = call.client;
   var playback = null;
 
@@ -42,19 +43,51 @@ twimlActions.Dial = function(command, callback) {
 
   var originate = function(channel, destination, callerId) {
     var dialed = client.Channel();
-
-    // rather than registering another handler, perhaps this should hook the active
-    // handler provided by the call object?
-    channel.on("StasisEnd", function(event, channel) {
-      hangupDialed(channel, dialed);
-    });
-
-    dialed.on("ChannelDestroyed", function(event, dialed) {
-      hangupOriginal(channel, dialed);
-    });
-
+    call.dialedChannel = dialed;
+    
     dialed.on("StasisStart", function(event, dialed) {
-      joinMixingBridge(channel, dialed);
+      if (command.parameters.bridge && (command.parameters.bridge === "false")) {
+        // automatic bridging of the channels is disabled 
+        
+        dialed.on("StasisEnd", function(event, dialed) {
+          // dialedExit(dialed, bridge);
+          console.log("Stasis End On Dialed Channel");
+        });
+
+        dialed.answer(function(err) {
+          if (err) {
+            throw err; // TODO: trap and handle this.
+          }
+          console.log(
+            "Channel %s - Dialed channel %s has been answered.",
+            channel.id, dialed.id);
+            
+            // make the dialed call the active call
+            call.channel = dialed;
+            
+            // continue executing with the action
+            var method = command.parameters.method || "POST";
+            var url = command.parameters.action || call.baseUrl;
+            var form = new formdata();
+            setCallData(call, form);
+            return fetchTwiml(method, url, call, form);
+        });
+
+
+      } else {
+      
+        // rather than registering another handler, perhaps this should hook the active
+        // handler provided by the call object?
+        channel.on("StasisEnd", function(event, channel) {
+          hangupDialed(channel, dialed);
+        });
+
+        dialed.on("ChannelDestroyed", function(event, dialed) {
+          hangupOriginal(channel, dialed);
+        });
+      
+        joinMixingBridge(channel, dialed);
+      }
     });
 
     dialed.originate({
@@ -66,21 +99,12 @@ twimlActions.Dial = function(command, callback) {
       function(err, dialed) {
         if (err) {
           console.log("Channel " + channel.id + " - Error originating outbound call: " + err.message);
-          exit();
+          return callback();
         }
       });
   };
 
-  var exit = function() {
-    if (call.hungup) {
-      return call.terminateCall();
-    } else {
-      return callback();
-    }
-  };
-
-  // handler for original channel hanging up so we can gracefully hangup the
-  // other end
+  // handler for original channel hanging. gracefully hangup the dialed channel
   var hangupDialed = function(channel, dialed) {
     console.log(
       "Channel %s - Channel has left the application. Hanging up dialed channel %s",
@@ -93,11 +117,13 @@ twimlActions.Dial = function(command, callback) {
     });
   };
 
+  // handler for dialed channel hanging up.
   var hangupOriginal = function(channel, dialed) {
-    console.log("Channel %s - Dialed channel %s has been hung up. Terminating call.",
+    console.log(
+      "Channel %s - Dialed channel %s has been hung up.",
       channel.id, dialed.id);
 
-    // hangup the other end
+    // hangup the original channel
     channel.hangup(function(err) {
       // ignore error since original channel could have hung up, causing the
       // dialed channel to exit Stasis
@@ -114,15 +140,18 @@ twimlActions.Dial = function(command, callback) {
 
     dialed.answer(function(err) {
       if (err) {
-        throw err;
+        throw err; // TODO: trap and handle this.
       }
+      console.log(
+        "Channel %s - Dialed channel %s has been answered.",
+        channel.id, dialed.id);
     });
 
     bridge.create({
       type: "mixing"
     }, function(err, bridge) {
       if (err) {
-        throw err;
+        throw err; // TODO: trap and handle this.
       }
 
       console.log("Channel %s - Created bridge %s", channel.id, bridge.id);
@@ -158,8 +187,11 @@ twimlActions.Dial = function(command, callback) {
     });
   };
 
-  var dest = "PJSIP/" + command.value + "@twilio1";
+  call.to = command.value;
+  var dest = ariaConfig.trunk.technology + "/" + command.value + "@" + ariaConfig.trunk.id;
+  console.log("Channel " + originalChannel.id + " - Placing outbound call to: " + dest);
   var cid = command.parameters.callerId || "";
   originate(call.channel, dest, cid);
 
 };
+

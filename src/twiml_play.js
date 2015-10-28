@@ -78,6 +78,39 @@ twimlActions.Play = function(command, callback) {
   var fileURL = url.parse(command.value);
   var fileHash = null;
 
+  // TODO: Add in support for playing back values in the standard voice
+  // NONSTANDARD - ASTERISK ONLY
+  if (command.parameters.type) {
+    if (command.parameters.type === "number") {
+      // read a number as a number (i.e. 3192 = "three thousands, one hundred and ninety-two")
+    } else
+    if (command.parameters.type === "digits") {
+      // read a number as a string of digits (i.e. 1947 = "one", "nine", "four", "seven")
+    } else
+    if (command.parameter.type === "date") {
+      // lots of subtype options here - perhaps this needs a default and a format map... dateFormat?
+      // read a unix timestamp value (seconds) as a date
+      // i.e. "1446047333" = "Wednesday, October Twenty Fifth, Two Thousand Fifteen"
+    } else
+    if (command.parameter.type === "time") {
+      // again, all kinds of local format stuff to deal with here... timeFormat?
+      // read a unix timestamp value (seconds) as a time
+      // i.e. "1446047333" = "Three", "Forty", "Eight", "P", "M", "G", "M", "T"
+    } else
+    if (command.parameters.type === "money") {
+      // need to add support for multiple currencies
+      // read a number as a monetary amount. (i.e. 129.95 = "one hundred and twenty-nine dollars and ninety-five cents")
+    } else
+    if (command.parameters.type === "alpha") {
+      // read a string as a list of characters (i.e. "Hello World" = "H", "E", "L", "L", "O", "space", "W", "O", "R", "L", "D")
+    } else
+    if (command.parameters.type === "phonetic") {
+      // read a string using ICAO phonetics (i.e. CB239 = "Charlie", "Bravo", "Two", "Tree", "Niner")
+    } else {
+      // ignore - not a supported format
+    }
+  }
+
   // if it does not have a protocol it must be relative - resolve it
   if (!fileURL.protocol) {
     var resolved = url.resolve(call.baseUrl, command.value);
@@ -93,7 +126,7 @@ twimlActions.Play = function(command, callback) {
     mode: "755"
   });
   dl.get(fileURL.href)
-    .dest(audioPath)
+    .dest(ariaConfig.audioPath)
     .rename(fileName)
     .run(function(err, files) {
       if (err) {
@@ -105,4 +138,5 @@ twimlActions.Play = function(command, callback) {
       }
     });
 };
+
 

@@ -44,8 +44,16 @@
   var rc = null;   
 
   // source the configuration
-  var config = require("/etc/asterisk/aria.conf.js");
+  ariaConfig = require("/etc/asterisk/aria.conf.js");
 
+  // initialize local http server for recorded files
+  var recApp = express();
+  recApp.use(express.static(ariaConfig.recordingPath));
+  var recServer = http.createServer(recApp);
+  recServer.listen(ariaConfig.recordingPort);
+  // TODO: make this secure, at least to some degree
+  
+  // initialize stasis / ARI
   function clientLoaded(err, client) {
     if (err) {
       throw err;
@@ -116,5 +124,6 @@
   });
   // connect to the local Asterisk server
   // TODO: validate config values
-  ari.connect(config.asterisk, config.username, config.password, clientLoaded);
+  ari.connect(ariaConfig.asterisk, ariaConfig.username, ariaConfig.password, clientLoaded);
 }());
+

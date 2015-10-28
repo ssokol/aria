@@ -13,6 +13,7 @@
 var fs = require("fs");
 var url = require("url");
 var md5 = require("md5");
+var http = require('http');
 var path = require("path");
 var util = require("util");
 var redis = require("redis");
@@ -20,11 +21,13 @@ var flite = require("flite");
 var parser = require("xmldoc");
 var uuid = require('node-uuid');
 var ari = require("ari-client");
+var express = require("express");
 var fetch = require("node-fetch");
 fetch.Promise = require("bluebird");
 var download = require("download");
 var formdata = require("form-data");
 
 var twimlActions = {};
-var audioPath = "/var/lib/asterisk/sounds/";
+var ariaConfig = {};
 var rc = redis.createClient();
+

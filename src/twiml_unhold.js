@@ -1,25 +1,24 @@
 /**************************************************************************************
 
-    Aria Enqueue action
+    Aria Unhold action
     
-    Place a call into a queue.
-    
-    NOT YET IMPLEMENTED
+    Unhold a held call leg.
 
 **************************************************************************************/
-twimlActions.Enqueue = function(command, callback) {
+twimlActions.Unhold = function(command, callback) {
 
   var call = command.call;
   var channel = call.channel;
   var client = call.client;
   var playback = null;
 
-  console.log("Channel " + channel.id + " - Enqueue: NOT YET IMPLEMENTED");
+  console.log("Channel " + channel.id + " - Hold");
 
-  // terminate the call on the next tick
+  // continue the call on the next tick
   setTimeout(function() {
     return callback();
   }, 0);
 
 };
+
 
