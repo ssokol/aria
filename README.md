@@ -25,7 +25,7 @@ You will need to enable ARI and add an ARI user. Information about enabling ARI 
 be found here: https://wiki.asterisk.org/wiki/display/AST/Getting+Started+with+ARI
 
 Once you have ARI enabled and a user added, you will need to put the host, username
-and password into the Aira configuration file: /etc/asterisk/aria.conf.js
+and password into the Aria configuration file: /etc/asterisk/aria.conf.js
 
     exports.asterisk="http://localhost:8088";
     exports.username="demo";
@@ -47,7 +47,7 @@ Once you have cloned the repository you will need to install all of the required
 node modules using npm:
 
     cd aria
-    npm install --dev
+    npm install
     
 This will install all of the necessary node modules plus some development tools. Next
 you will need to run some grunt tasks to get the aria application assembled and ready
