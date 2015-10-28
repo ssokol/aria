@@ -21,6 +21,7 @@
     "download": "~4.4.1",
     "form-data": "~1.0.0-rc3",
     "bluebird": "~2.10.2",
-    "ari-client": "~0.3.0"
+    "ari-client": "~0.3.0",
+    "node-uuid": "~1.4.3"
   }
 }

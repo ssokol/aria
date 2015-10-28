@@ -23,7 +23,7 @@ twimlActions.Gather = function(command, callback) {
   var timer = null;
 
   // clear the digit buffer?
-  if (command.parameters.clear === "true") {
+  if (command.parameters.clear !== "false") {
     call.digits = "";
   }
 

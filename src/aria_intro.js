@@ -18,6 +18,7 @@ var util = require("util");
 var redis = require("redis");
 var flite = require("flite");
 var parser = require("xmldoc");
+var uuid = require('node-uuid');
 var ari = require("ari-client");
 var fetch = require("node-fetch");
 fetch.Promise = require("bluebird");
