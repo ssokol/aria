@@ -47,8 +47,6 @@ var makeAction = function(xml, parent) {
 // make subsequent requests, optionally passing back data
 var fetchTwiml = function(method, twimlURL, call, data) {
 
-  console.log("Fetching Twiml From: " + twimlURL);
-  
   var options = {
     method: method || "POST",
     body: data || null
@@ -59,6 +57,8 @@ var fetchTwiml = function(method, twimlURL, call, data) {
     twimlURL = url.resolve(call.baseUrl, twimlURL);
   }
   
+  console.log("Fetching Twiml From:%s Options:%s", twimlURL, util.inspect(options));
+
   fetch(twimlURL, options)
     .then(function(res) {
       return res.text();
@@ -165,8 +165,9 @@ function AriaCall(client, channel, url, twiml, done) {
   });
 
   // fetch the Twiml for this call
+  //
+  url += "&CallSid=" + this.sid; 
   fetchTwiml("GET", url, that, null);
-
 }
 
 

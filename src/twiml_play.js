@@ -119,24 +119,18 @@ twimlActions.Play = function(command, callback) {
 
   // generate a hash which we will use as the filename
   var hashName = md5(fileURL.href);
-  var fileName = hashName + path.extname(fileURL.href);
+  var options = {
+    filename : hashName + path.extname(fileURL.href)
+  };
 
-  // create a downloader object and fetch the file
-  var dl = new download({
-    mode: "755"
+  // download file
+  download(fileURL.href, ariaConfig.audioPath, options).then(() => {
+    console.log("Retrieved %s -> %s%s", fileURL.href, ariaConfig.audioPath, options.filename);
+    play(hashName, exit);
+  }).catch((err) => {
+    console.log("Channel " + channel.id + " - ERROR: Unable to download requested file.");
+    console.error(err);
   });
-  dl.get(fileURL.href)
-    .dest(ariaConfig.audioPath)
-    .rename(fileName)
-    .run(function(err, files) {
-      if (err) {
-        console.log("Channel " + channel.id + " - ERROR: Unable to download requested file.");
-        console.error(err);
-        exit();
-      } else {
-        play(hashName, exit);
-      }
-    });
 };
 
 
